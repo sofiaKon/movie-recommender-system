@@ -20,5 +20,47 @@ item_similarity_df = pd.DataFrame(
     columns=user_item_filled.columns
 )
 
-print("Размер user-item matrix:", user_item_filled.shape)
-print("Размер матрицы похожести:", item_similarity_df.shape)
+# dictionary of movieId and title
+movie_titles = movies.set_index("movieId")["title"]
+
+
+def find_movie(title_part):
+    result = movies[movies["title"].str.contains(
+        title_part, case=False, na=False)]
+    return result[["movieId", "title"]].head(10)
+
+
+def get_similar_movies(movie_id, top_n=10):
+    similar_scores = item_similarity_df[movie_id].sort_values(ascending=False)
+
+    similar_scores = similar_scores.drop(movie_id)
+
+    result = pd.DataFrame({
+        "movieId": similar_scores.index,
+        "similarity": similar_scores.values
+    }).head(top_n)
+
+    result["title"] = result["movieId"].map(movie_titles)
+
+    return result[["movieId", "title", "similarity"]]
+
+
+def recommend_movies_for_user(user_id, top_n=10):
+    user_ratings = user_item_filled.loc[user_id]
+
+    unrated_movies = user_ratings[user_ratings == 0].index
+
+    predicted_scores = item_similarity_df.loc[unrated_movies].dot(
+        user_ratings) / item_similarity_df.loc[unrated_movies].sum(axis=1)
+
+    recommended_movies = predicted_scores.sort_values(
+        ascending=False).head(top_n)
+
+    result = pd.DataFrame({
+        "movieId": recommended_movies.index,
+        "predicted_rating": recommended_movies.values
+    })
+
+    result["title"] = result["movieId"].map(movie_titles)
+
+    return result[["movieId", "title", "predicted_rating"]]
