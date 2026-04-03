@@ -30,7 +30,7 @@ def find_movie(title_part):
     return result[["movieId", "title"]].head(10)
 
 
-def get_similar_movies(movie_id, top_n=10):
+def get_similar_movies(movie_id, top_n=5):
     similar_scores = item_similarity_df[movie_id].sort_values(ascending=False)
 
     similar_scores = similar_scores.drop(movie_id)
@@ -45,20 +45,33 @@ def get_similar_movies(movie_id, top_n=10):
     return result[["movieId", "title", "similarity"]]
 
 
-def recommend_movies_for_user(user_id, top_n=10):
+def recommend_movies_for_user(user_id, top_n=5, min_similarity=0.1, top_k=20): #Method to recommend movies for a user based on really watched movies
     user_ratings = user_item_filled.loc[user_id]
-
+    rated_movies = user_ratings[user_ratings > 0]
     unrated_movies = user_ratings[user_ratings == 0].index
 
-    predicted_scores = item_similarity_df.loc[unrated_movies].dot(
-        user_ratings) / item_similarity_df.loc[unrated_movies].sum(axis=1)
+    predictions = {}
 
-    recommended_movies = predicted_scores.sort_values(
-        ascending=False).head(top_n)
+    for movie_id in unrated_movies:
+        similarities = item_similarity_df.loc[movie_id, rated_movies.index]
+        similarities = similarities[similarities > min_similarity].sort_values(ascending=False).head(top_k)
+
+        if len(similarities) == 0:
+            continue
+
+        relevant_ratings = rated_movies[similarities.index]
+
+        weighted_sum = (similarities * relevant_ratings).sum()
+        sim_sum = similarities.sum()
+
+        if sim_sum > 0:
+            predictions[movie_id] = weighted_sum / sim_sum
+
+    predicted_scores = pd.Series(predictions).sort_values(ascending=False).head(top_n)
 
     result = pd.DataFrame({
-        "movieId": recommended_movies.index,
-        "predicted_rating": recommended_movies.values
+        "movieId": predicted_scores.index,
+        "predicted_rating": predicted_scores.values
     })
 
     result["title"] = result["movieId"].map(movie_titles)

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMatch</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 32px;
+        }
+
+        p {
+            color: #cbd5e1;
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0 30px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 10px;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        .card {
+            background: #334155;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .small {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .section-title {
+            margin-top: 30px;
+            margin-bottom: 12px;
+            font-size: 22px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>CineMatch</h1>
+        <p>Movie recommendation system using item-based collaborative filtering.</p>
+
+        <form method="POST">
+            <input type="text" name="movie_title" placeholder="Enter a movie title..." value="{{ query }}">
+            <button type="submit">Recommend</button>
+        </form>
+
+        {% if matches %}
+        <div class="section-title">Matched Movies</div>
+        {% for movie in matches %}
+        <div class="card">
+            <strong>{{ movie.title }}</strong>
+            <div class="small">movieId: {{ movie.movieId }}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if recommendations %}
+        <div class="section-title">Recommended Movies</div>
+        {% for movie in recommendations %}
+        <div class="card">
+            <strong>{{ movie.title }}</strong>
+            <div class="small">Similarity: {{ "%.4f"|format(movie.similarity) }}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</body>
+
+</html>
